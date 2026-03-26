@@ -10,7 +10,9 @@
   <title>퀵 정렬 튜토리얼</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
-  <style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
 /* === variables.css === */
 /* ============================================================
    퀵 정렬 시각화 튜토리얼 — 통합 스타일시트
@@ -1884,6 +1886,7 @@ h3 {
             <line x1="10" y1="5" x2="16" y2="12" stroke="currentColor" stroke-width="1.5"/>
           </svg>
         </button>
+        <button id="btn-save-pdf" class="btn-icon" aria-label="PDF 저장" title="현재 화면 PDF 저장"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2v6h6M12 18v-6M9 15l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <button id="btn-toggle-theme" class="btn-icon" aria-label="다크/라이트 모드 전환">
           <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
             <circle cx="10" cy="10" r="4" stroke="currentColor" stroke-width="1.5"/>
@@ -2154,6 +2157,11 @@ class ControlPanel {
 			});
 		}
 
+		const pdfBtn = document.getElementById('btn-save-pdf');
+		if (pdfBtn) {
+			pdfBtn.addEventListener('click', () => this._savePDF());
+		}
+
 		const tabBtns = document.querySelectorAll('.tab-btn');
 		tabBtns.forEach((btn) => {
 			btn.addEventListener('click', () => {
@@ -2277,6 +2285,31 @@ class ControlPanel {
 
 	disableControls() {
 		document.querySelectorAll('#btn-to-start, #btn-step-back, #btn-step-forward, #btn-to-end').forEach((el) => (el.disabled = true));
+	}
+	async _savePDF() {
+		const btn = document.getElementById('btn-save-pdf');
+		if (btn) btn.style.opacity = '0.5';
+		try {
+			const target = document.body;
+			const canvas = await html2canvas(target, {
+				scale: 2,
+				useCORS: true,
+				backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--color-bg-primary').trim() || '#f7f6f3',
+				width: window.innerWidth,
+				height: window.innerHeight,
+				windowWidth: window.innerWidth,
+				windowHeight: window.innerHeight,
+			});
+			const imgData = canvas.toDataURL('image/png');
+			const { jsPDF } = window.jspdf;
+			const isLandscape = window.innerWidth > window.innerHeight;
+			const pdf = new jsPDF({ orientation: isLandscape ? 'landscape' : 'portrait', unit: 'px', format: [canvas.width / 2, canvas.height / 2] });
+			pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
+			pdf.save('quicksort-step-' + (document.getElementById('current-step')?.textContent || '0') + '.pdf');
+		} catch (e) {
+			console.error('PDF save error:', e);
+		}
+		if (btn) btn.style.opacity = '';
 	}
 }
 
