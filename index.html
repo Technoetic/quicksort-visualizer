@@ -2290,22 +2290,33 @@ class ControlPanel {
 		const btn = document.getElementById('btn-save-pdf');
 		if (btn) btn.style.opacity = '0.5';
 		try {
-			const target = document.body;
-			const canvas = await html2canvas(target, {
+			const vw = window.innerWidth;
+			const vh = window.innerHeight;
+			const canvas = await html2canvas(document.body, {
 				scale: 2,
 				useCORS: true,
 				backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--color-bg-primary').trim() || '#f7f6f3',
-				width: window.innerWidth,
-				height: window.innerHeight,
-				windowWidth: window.innerWidth,
-				windowHeight: window.innerHeight,
+				width: vw,
+				height: vh,
+				windowWidth: vw,
+				windowHeight: vh,
+				scrollX: 0,
+				scrollY: 0,
+				x: 0,
+				y: 0,
 			});
-			const imgData = canvas.toDataURL('image/png');
+			const imgData = canvas.toDataURL('image/jpeg', 0.92);
 			const { jsPDF } = window.jspdf;
-			const isLandscape = window.innerWidth > window.innerHeight;
-			const pdf = new jsPDF({ orientation: isLandscape ? 'landscape' : 'portrait', unit: 'px', format: [canvas.width / 2, canvas.height / 2] });
-			pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
-			pdf.save('quicksort-step-' + (document.getElementById('current-step')?.textContent || '0') + '.pdf');
+			const pdfW = vw * 0.75;
+			const pdfH = vh * 0.75;
+			const pdf = new jsPDF({
+				orientation: vw > vh ? 'landscape' : 'portrait',
+				unit: 'pt',
+				format: [pdfW, pdfH],
+			});
+			pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
+			const step = document.getElementById('current-step')?.textContent || '0';
+			pdf.save('quicksort-step-' + step + '.pdf');
 		} catch (e) {
 			console.error('PDF save error:', e);
 		}
